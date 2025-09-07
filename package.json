@@ -1,0 +1,47 @@
+{
+  "name": "nutrea",
+  "private": false,
+  "version": "0.0.1",
+  "type": "module",
+  "author": {
+    "name": "Ezekiel Williams",
+    "email": "broncoscorpio@gmail.com"
+  },
+  "description": "React tree component with accessibility and performance in mind.",
+  "keywords": [
+    "react",
+    "tree",
+    "accessible",
+    "virtualized",
+    "virtualization"
+  ],
+  "main": "dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@tanstack/react-virtual": "^3.13.12",
+    "react": "^19.1.0",
+    "react-arborist": "^3.4.3",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.31.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "eslint": "^9.31.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^16.0.0",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.26.1",
+    "vite": "^7.0.6"
+  }
+}

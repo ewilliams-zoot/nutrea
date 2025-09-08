@@ -3,12 +3,14 @@
   display: flex;
   align-items: center;
 
-  &:hover {
-    background: rgba(0, 0, 0, 0.2);
-  }
-
   .level-spacer {
     border-left: 1px solid transparent;
+  }
+}
+
+.tree-row {
+  &:hover {
+    background: rgba(0, 0, 0, 0.2);
   }
 
   &.selected {

@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import Tree from './tree/Tree';
-import { TreeApi, TreeDataOut } from './tree/types';
+import { TreeApi, TreeDataNode } from './tree/types';
 
-const mockMap: Record<string, { id: string; childrenIds: string[]; label: string }> = {
+const mockMap: Record<string, { id: string; childrenIds?: string[]; label: string }> = {
   a: {
     id: 'a',
     childrenIds: ['b', 'c'],
@@ -15,7 +15,6 @@ const mockMap: Record<string, { id: string; childrenIds: string[]; label: string
   },
   c: {
     id: 'c',
-    childrenIds: [],
     label: 'From C!'
   },
   d: {
@@ -25,7 +24,6 @@ const mockMap: Record<string, { id: string; childrenIds: string[]; label: string
   },
   e: {
     id: 'e',
-    childrenIds: [],
     label: 'sup'
   }
 };
@@ -40,13 +38,13 @@ function createNode(level: number, childId?: string) {
   mockMap[newId] = node;
 
   if (level === 0) {
-    mockMap.a.childrenIds.push(newId);
+    mockMap.a.childrenIds!.push(newId);
     return;
   }
 
   createNode(level - 1, newId);
 }
-for (let i = 0; i < 5_000; ++i) {
+for (let i = 0; i < 1_000; ++i) {
   createNode(100);
 }
 
@@ -55,13 +53,13 @@ function AppMine() {
   const [searchTerm, setSearchTerm] = useState('');
 
   const treeData = useMemo(() => {
-    const result: TreeDataOut[] = [];
+    const result: TreeDataNode[] = [];
 
     (function traverse(nodeId: string, parentId?: string, level = 0) {
       const node = mockMap[nodeId];
-      const resultNode: TreeDataOut = { ...node, level, parentId };
+      const resultNode: TreeDataNode = { ...node, level, parentId };
       result.push(resultNode);
-      node.childrenIds.forEach((childId) => traverse(childId, node.id, level + 1));
+      node.childrenIds?.forEach((childId) => traverse(childId, node.id, level + 1));
     })('a');
 
     return result;
@@ -84,7 +82,8 @@ function AppMine() {
       const mapKeys = Object.keys(mockMap);
       const index = Math.floor(Math.random() * mapKeys.length);
       const key = mapKeys[index];
-      treeRef.current.expandNode(key);
+      treeRef.current.expandToRoot(key);
+      treeRef.current.selectNode(key);
     }
   }, []);
 
@@ -96,7 +95,7 @@ function AppMine() {
         <button onClick={expandRandom}>Expand Random</button>
         <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
       </div>
-      <Tree rootId="a" treeData={treeData} treeRef={treeRef} searchTerm={searchTerm} />
+      <Tree rootId="a" treeData={treeData} treeRef={treeRef} searchTerm={searchTerm} showRoot={true} />
     </>
   );
 }

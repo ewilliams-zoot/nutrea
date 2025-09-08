@@ -1,16 +1,20 @@
-export interface TreeDataOut {
+export interface TreeDataNode {
   id: string;
-  childrenIds: string[];
+  childrenIds?: string[];
   label: string;
   level: number;
   parentId?: string;
 }
 
+type NodeCallback = (nodeId: string) => void;
+
 export interface TreeApi {
-  expandNode: (nodeId: string) => void;
-  expandAllDescendantsOf: (nodeId: string) => void;
-  collapseAllDescendantsOf: (nodeId: string) => void;
-  selectNode: (nodeId: string) => void;
+  expandNode: NodeCallback;
+  collapseNode: NodeCallback;
+  expandAllDescendantsOf: NodeCallback;
+  collapseAllDescendantsOf: NodeCallback;
+  selectNode: NodeCallback;
   expandAll: () => void;
   collapseAll: () => void;
+  expandToRoot: NodeCallback;
 }

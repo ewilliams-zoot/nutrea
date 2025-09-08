@@ -1,31 +1,27 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import './Tree.css';
-import { useCallback, useMemo, useRef, useState } from 'react';
-import { TreeApi, TreeDataOut } from './types';
+import { memo, useCallback, useMemo, useRef, useState } from 'react';
+import { TreeApi, TreeDataNode } from './types';
 import TreeNode from './TreeNode';
 import { useTreeState } from './use_tree_state';
-
-// Opinions of the Library
-// 1. Data must be flattened before input into Tree, but also provide a flattening utility. If we flatten the data
-// for the user, we could be making them "unflatten" it just to flatten again here. That's straight
-// up wasteful, dawg.
-// 2. Along those same lines, you must add some fields to your data, if it doesn't already have it. Again, saving
-// valuable CPU cycles for people who already have tree data in a list with the right data.
+import TreeRow from './TreeRow';
 
 interface TreeProps {
-  rootId: TreeDataOut['id'];
-  treeData: TreeDataOut[];
+  rootId: TreeDataNode['id'];
+  treeData: TreeDataNode[];
+  showRoot?: boolean;
   searchTerm?: string;
   treeRef?: React.RefObject<TreeApi | null>;
-  onMove?: (nodeId: string, fromParentId: string, toParentId: string) => void;
+  virtualBufferCount?: number;
+  onNodeMoved?: (nodeId: string, fromParentId: string, toParentId: string) => void;
 }
 
-const Tree = (props: TreeProps) => {
-  const { treeData, rootId, treeRef, searchTerm, onMove } = props;
+const Tree = memo(function Tree(props: TreeProps) {
+  const { treeData, rootId, treeRef, searchTerm, onNodeMoved, showRoot = false, virtualBufferCount = 0 } = props;
   const viewportRef = useRef(null);
 
   const { orderedNodeList, selectedNode, setNewSelectedNode, moveNode, toggleExpanded, expandedNodes, focusedNode } =
-    useTreeState(rootId, treeData, onMove, treeRef, searchTerm);
+    useTreeState({ rootId, treeData, onMoveHandler: onNodeMoved, treeRef, searchTerm, showRoot });
 
   const [prevSelected, setPrevSelected] = useState<string | null>(selectedNode);
 
@@ -33,7 +29,7 @@ const Tree = (props: TreeProps) => {
     count: orderedNodeList.length,
     getScrollElement: () => viewportRef.current,
     estimateSize: () => 30,
-    overscan: 0
+    overscan: virtualBufferCount
   });
 
   const idToIndex = useMemo(
@@ -57,6 +53,8 @@ const Tree = (props: TreeProps) => {
 
   const dragStarted = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
+      // Add the native listener to prevent React from removing it when the node
+      // is scrolled out of a virtualized list.
       e.target.addEventListener('dragend', dragEnded);
     },
     [dragEnded]
@@ -118,14 +116,16 @@ const Tree = (props: TreeProps) => {
     [virtual, setNewSelectedNode, orderedNodeList, expandedNodes, toggleExpanded, focusedNode, idToIndex]
   );
 
-  // Computer, mama keeps saying that Jude cannot grow; this is nacceptable. Thank you
-  // Jude is not allowed to grow up, mama said.
-  //judenknjkm, mjjlkmama fartt can grow huijijo;nkiu909i0oko0pip9jo
-  //yuhguyuugujikol; []\  ,gggggggggggggggggggggujikol .;
-  //jude
-  /*
-tyhuihjuiujyy8u9i9u90i90yy8uj87t67ygtgyuguhuhn
-  */
+  // Accessibility guidelines say that when the tree is focused you must either focus the
+  // first node when no item is currently selected, or the currently selected node. To gain focus
+  // in a virtual list, we must scroll to the currently selected node.
+  const accessibleTreeFocus = useCallback(() => {
+    if (selectedNode === null) {
+      setNewSelectedNode(orderedNodeList[0].id);
+    } else {
+      virtual.scrollToIndex(idToIndex[selectedNode]);
+    }
+  }, [virtual, setNewSelectedNode, orderedNodeList, idToIndex, selectedNode]);
 
   return (
     <div
@@ -135,32 +135,44 @@ tyhuihjuiujyy8u9i9u90i90yy8uj87t67ygtgyuguhuhn
       onDragEnd={dragEnded}
       ref={viewportRef}
       style={{ height: '700px', overflow: 'auto' }}
+      onFocus={accessibleTreeFocus}
+      onDragStart={dragStarted}
     >
       <div tabIndex={-1} style={{ position: 'relative', height: `${virtual.getTotalSize()}px`, width: '1800px' }}>
         {virtual.getVirtualItems().map((vi) => (
           <div
             key={vi.index}
-            className="tree-row"
+            role="tree-item"
+            aria-selected={orderedNodeList[vi.index].id === selectedNode}
+            aria-expanded={
+              orderedNodeList[vi.index].childrenIds !== undefined
+                ? expandedNodes[orderedNodeList[vi.index].id]
+                : undefined
+            }
+            aria-level={orderedNodeList[vi.index].level + 1}
             style={{ position: 'absolute', width: '100%', height: `${vi.size}px`, left: 0, top: `${vi.start}px` }}
-            onDragStart={dragStarted}
-            tabIndex={-1}
-            onFocus={(e) => e.stopPropagation()}
           >
-            <TreeNode
-              focused={focusedNode === orderedNodeList[vi.index].id}
-              key={orderedNodeList[vi.index].id}
+            <TreeRow
               nodeData={orderedNodeList[vi.index]}
+              onNodeMoved={moveNode}
               expanded={expandedNodes[orderedNodeList[vi.index].id]}
+              focused={focusedNode === orderedNodeList[vi.index].id}
               selected={orderedNodeList[vi.index].id === selectedNode}
               onToggleExpand={toggleExpanded}
               onSelectNode={setNewSelectedNode}
-              onNodeMoved={moveNode}
-            />
+            >
+              <TreeNode
+                key={orderedNodeList[vi.index].id}
+                nodeData={orderedNodeList[vi.index]}
+                expanded={expandedNodes[orderedNodeList[vi.index].id]}
+                onToggleExpand={toggleExpanded}
+              />
+            </TreeRow>
           </div>
         ))}
       </div>
     </div>
   );
-};
+});
 
 export default Tree;

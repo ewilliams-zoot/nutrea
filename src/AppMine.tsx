@@ -129,7 +129,15 @@ function AppMine() {
         <button onClick={addRandomNode}>Add Random Node</button>
         <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
       </div>
-      <Tree rootId="a" treeData={treeData} treeRef={treeRef} searchTerm={searchTerm} showRoot={true} />
+      <Tree
+        rootId="a"
+        treeData={treeData}
+        treeRef={treeRef}
+        searchTerm={searchTerm}
+        showRoot={true}
+        onNodeMoved={(a, b, c) => console.log('node moved', a, b, c)}
+        onNodeDragEnd={(nodeId) => console.log('node drag ended', nodeId)}
+      />
     </>
   );
 }

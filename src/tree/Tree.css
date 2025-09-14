@@ -1,5 +1,5 @@
 .default-tree-node {
-  height: 30px;
+  height: 28px;
   display: flex;
   align-items: center;
 
@@ -9,6 +9,8 @@
 }
 
 .tree-row {
+  border: 1px solid transparent;
+
   &:hover {
     background: rgba(0, 0, 0, 0.2);
   }

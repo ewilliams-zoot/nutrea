@@ -27,4 +27,5 @@ export interface TreeProps {
   treeRef?: React.RefObject<TreeApi | null>;
   virtualBufferCount?: number;
   onNodeMoved?: (nodeId: string, fromParentId: string, toParentId: string) => void;
+  onNodeDragEnd?: (nodeId: string) => void;
 }

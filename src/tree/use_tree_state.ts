@@ -1,21 +1,7 @@
-import { RefObject, useCallback, useImperativeHandle, useMemo, useState } from 'react';
-import { TreeApi, TreeDataNode } from './types';
+import { useCallback, useImperativeHandle, useMemo, useState } from 'react';
+import { TreeApi, TreeDataNode, TreeProps } from './types';
 
-export const useTreeState = ({
-  rootId,
-  treeData,
-  onMoveHandler,
-  treeRef,
-  searchTerm,
-  showRoot
-}: {
-  rootId: string;
-  treeData: TreeDataNode[];
-  onMoveHandler: ((nodeId: string, fromParentId: string, toParentId: string) => void) | undefined;
-  treeRef: RefObject<TreeApi | null> | undefined;
-  searchTerm: string | undefined;
-  showRoot: boolean;
-}) => {
+export const useTreeState = ({ rootId, treeData, onNodeMoved, treeRef, searchTerm, showRoot }: TreeProps) => {
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({ [rootId]: true });
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   // const [treeState, setTreeState] = useState(treeData);
@@ -59,6 +45,15 @@ export const useTreeState = ({
 
     return result;
   }, [treeDataMap, rootId, expandedNodes, searchTerm, showRoot]);
+
+  const idToIndex = useMemo(
+    () =>
+      orderedNodeList.reduce<Record<string, number>>((acc, curr, i) => {
+        acc[curr.id] = i;
+        return acc;
+      }, {}),
+    [orderedNodeList]
+  );
 
   useImperativeHandle(
     treeRef,
@@ -151,19 +146,12 @@ export const useTreeState = ({
     [rootId, setSelectedNode, treeDataMap]
   );
 
-  const toggleExpanded = useCallback(
-    (nodeId: string) => {
-      if (treeDataMap[nodeId].childrenIds === undefined) {
-        return;
-      }
-
-      setExpandedNodes((state) => ({
-        ...state,
-        [nodeId]: !state[nodeId]
-      }));
-    },
-    [treeDataMap]
-  );
+  const toggleExpanded = useCallback((nodeId: string) => {
+    setExpandedNodes((state) => ({
+      ...state,
+      [nodeId]: !state[nodeId]
+    }));
+  }, []);
 
   const setNewSelectedNode = useCallback(
     (nodeId: string) => {
@@ -174,7 +162,7 @@ export const useTreeState = ({
 
   const moveNode = useCallback(
     (nodeId: string, fromParentId: string, toParentId: string) => {
-      onMoveHandler?.(nodeId, fromParentId, toParentId);
+      onNodeMoved?.(nodeId, fromParentId, toParentId);
       // setTreeState((prevState) => {
       //   const dragNode: TreeDataOut = { ...treeState[nodeId], parentId: toParentId };
       //   const oldParent: TreeDataOut = {
@@ -194,7 +182,7 @@ export const useTreeState = ({
       //   };
       // });
     },
-    [onMoveHandler]
+    [onNodeMoved]
   );
 
   return {
@@ -205,6 +193,7 @@ export const useTreeState = ({
     moveNode,
     expandedNodes,
     focusedNode,
-    setFocusedNode
+    setFocusedNode,
+    idToIndex
   };
 };

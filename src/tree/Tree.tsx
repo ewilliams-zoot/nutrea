@@ -1,27 +1,25 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import './Tree.css';
-import { memo, useCallback, useMemo, useRef, useState } from 'react';
-import { TreeApi, TreeDataNode } from './types';
+import { memo, useCallback, useRef, useState } from 'react';
 import TreeNode from './TreeNode';
 import { useTreeState } from './use_tree_state';
 import TreeRow from './TreeRow';
-
-interface TreeProps {
-  rootId: TreeDataNode['id'];
-  treeData: TreeDataNode[];
-  showRoot?: boolean;
-  searchTerm?: string;
-  treeRef?: React.RefObject<TreeApi | null>;
-  virtualBufferCount?: number;
-  onNodeMoved?: (nodeId: string, fromParentId: string, toParentId: string) => void;
-}
+import { TreeProps } from './types';
 
 const Tree = memo(function Tree(props: TreeProps) {
-  const { treeData, rootId, treeRef, searchTerm, onNodeMoved, showRoot = false, virtualBufferCount = 0 } = props;
+  const { virtualBufferCount = 0 } = props;
   const viewportRef = useRef(null);
 
-  const { orderedNodeList, selectedNode, setNewSelectedNode, moveNode, toggleExpanded, expandedNodes, focusedNode } =
-    useTreeState({ rootId, treeData, onMoveHandler: onNodeMoved, treeRef, searchTerm, showRoot });
+  const {
+    orderedNodeList,
+    selectedNode,
+    setNewSelectedNode,
+    moveNode,
+    toggleExpanded,
+    expandedNodes,
+    focusedNode,
+    idToIndex
+  } = useTreeState(props);
 
   const [prevSelected, setPrevSelected] = useState<string | null>(selectedNode);
 
@@ -32,17 +30,8 @@ const Tree = memo(function Tree(props: TreeProps) {
     overscan: virtualBufferCount
   });
 
-  const idToIndex = useMemo(
-    () =>
-      orderedNodeList.reduce<Record<string, number>>((acc, curr, i) => {
-        acc[curr.id] = i;
-        return acc;
-      }, {}),
-    [orderedNodeList]
-  );
-
-  if (prevSelected !== selectedNode) {
-    const selectedIndex = orderedNodeList.findIndex(({ id }) => id === selectedNode);
+  if (selectedNode !== null && prevSelected !== selectedNode) {
+    const selectedIndex = idToIndex[selectedNode];
     virtual.scrollToIndex(selectedIndex);
     setPrevSelected(selectedNode);
   }
@@ -88,7 +77,7 @@ const Tree = memo(function Tree(props: TreeProps) {
           }
           break;
         case 'ArrowRight':
-          if (!expandedNodes[currentNodeId]) {
+          if (currentNodeData.childrenIds !== undefined && !expandedNodes[currentNodeId]) {
             toggleExpanded(currentNodeId);
           } else if (currIndex < orderedNodeList.length - 1) {
             virtual.scrollToIndex(currIndex + 1);
@@ -96,7 +85,7 @@ const Tree = memo(function Tree(props: TreeProps) {
           }
           break;
         case 'ArrowLeft':
-          if (expandedNodes[currentNodeId]) {
+          if (currentNodeData.childrenIds !== undefined && expandedNodes[currentNodeId]) {
             toggleExpanded(currentNodeId);
           } else {
             let parentIndex = currIndex;

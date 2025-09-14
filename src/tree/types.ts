@@ -18,3 +18,13 @@ export interface TreeApi {
   collapseAll: () => void;
   expandToRoot: NodeCallback;
 }
+
+export interface TreeProps {
+  rootId: TreeDataNode['id'];
+  treeData: TreeDataNode[];
+  showRoot?: boolean;
+  searchTerm?: string;
+  treeRef?: React.RefObject<TreeApi | null>;
+  virtualBufferCount?: number;
+  onNodeMoved?: (nodeId: string, fromParentId: string, toParentId: string) => void;
+}

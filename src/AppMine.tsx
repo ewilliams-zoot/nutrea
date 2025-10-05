@@ -1,17 +1,21 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
-import Tree from './tree/Tree';
-import { TreeApi, TreeDataNode } from './tree/types';
-import { flushSync } from 'react-dom';
+import { useCallback, useState } from 'react';
+// import DefaultTree from './tree_hook/DefaultTree';
+import WithDragAndDrop from './tree_hook/WithDragAndDrop';
+
+interface MyTreeNode {
+  id: string;
+  childrenIds?: string[];
+  label: string;
+}
 
 function AppMine() {
-  const treeRef = useRef<TreeApi>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sourceData, setSourceData] = useState(() => {
+  const [expandedState, setExpandedState] = useState<Record<string, boolean>>({});
+  const [sourceData] = useState(() => {
     const mockMap: Record<string, { id: string; childrenIds?: string[]; label: string }> = {
-      a: {
-        id: 'a',
+      root: {
+        id: 'root',
         childrenIds: ['b', 'c'],
-        label: 'Hello'
+        label: 'Root'
       },
       b: {
         id: 'b',
@@ -43,102 +47,56 @@ function AppMine() {
       mockMap[newId] = node;
 
       if (level === 0) {
-        mockMap.a.childrenIds!.push(newId);
+        mockMap.root.childrenIds!.push(newId);
         return;
       }
 
       createNode(level - 1, newId);
     }
-    for (let i = 0; i < 1_000; ++i) {
-      createNode(100);
+    for (let i = 0; i < 3_000; ++i) {
+      createNode(8);
     }
     return mockMap;
   });
 
-  const treeData = useMemo(() => {
-    const result: TreeDataNode[] = [];
-
-    (function traverse(nodeId: string, parentId?: string, level = 0) {
-      const node = sourceData[nodeId];
-      const resultNode: TreeDataNode = { ...node, level, parentId };
-      result.push(resultNode);
-      node.childrenIds?.forEach((childId) => traverse(childId, node.id, level + 1));
-    })('a');
-
-    return result;
-  }, [sourceData]);
+  const getChildren = useCallback(
+    (node: MyTreeNode) => {
+      if (node.childrenIds) {
+        return node.childrenIds.map((childId) => sourceData[childId]);
+      }
+      return undefined;
+    },
+    [sourceData]
+  );
 
   const expandAll = useCallback(() => {
-    if (treeRef.current) {
-      treeRef.current.expandAll();
-    }
-  }, []);
-
-  const collapseAll = useCallback(() => {
-    if (treeRef.current) {
-      treeRef.current.collapseAll();
-    }
-  }, []);
-
-  const expandRandom = useCallback(() => {
-    if (treeRef.current) {
-      const mapKeys = Object.keys(sourceData);
-      const index = Math.floor(Math.random() * mapKeys.length);
-      const key = mapKeys[index];
-      treeRef.current.expandToRoot(key);
-      treeRef.current.selectNode(key);
-    }
+    const newState: Record<string, boolean> = {};
+    Object.keys(sourceData).forEach((id) => {
+      if (sourceData[id].childrenIds) {
+        newState[id] = true;
+      }
+    });
+    setExpandedState(newState);
   }, [sourceData]);
 
-  const addRandomNode = useCallback(() => {
-    if (!treeRef.current) return;
-    const newId = crypto.randomUUID();
-    flushSync(() => {
-      setSourceData((state) => {
-        const mapKeys = Object.keys(state);
-        const index = Math.floor(Math.random() * mapKeys.length);
-        const randomParentKey = mapKeys[index];
-
-        const parent = state[randomParentKey];
-        const newParent = {
-          ...parent,
-          childrenIds: parent.childrenIds ? [...parent.childrenIds, newId] : [newId]
-        };
-        const newNode = {
-          id: newId,
-          label: newId
-        };
-
-        return {
-          ...state,
-          [parent.id]: newParent,
-          [newId]: newNode
-        };
-      });
-    });
-    treeRef.current.expandToRoot(newId);
-    treeRef.current.selectNode(newId);
+  const collapseAll = useCallback(() => {
+    setExpandedState({});
   }, []);
 
   return (
-    <>
+    <div>
       <div>
         <button onClick={expandAll}>Expand All</button>
         <button onClick={collapseAll}>Collapse All</button>
-        <button onClick={expandRandom}>Expand Random</button>
-        <button onClick={addRandomNode}>Add Random Node</button>
-        <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
       </div>
-      <Tree
-        rootId="a"
-        treeData={treeData}
-        treeRef={treeRef}
-        searchTerm={searchTerm}
-        showRoot={true}
-        onNodeMoved={(a, b, c) => console.log('node moved', a, b, c)}
-        onNodeDragEnd={(nodeId) => console.log('node drag ended', nodeId)}
+      <WithDragAndDrop
+        data={sourceData}
+        rootId="root"
+        getChildren={getChildren}
+        expandedState={expandedState}
+        onExpandedStateChange={setExpandedState}
       />
-    </>
+    </div>
   );
 }
 

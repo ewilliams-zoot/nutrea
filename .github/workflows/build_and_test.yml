@@ -3,10 +3,10 @@ on: [push]
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@v5
-        - uses: actions/setup-node@v5
-          with:
-            node-version: '22.x'
-        - run: npm ci
-        - run: npm run testRun
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22.x'
+      - run: npm ci
+      - run: npm run testRun

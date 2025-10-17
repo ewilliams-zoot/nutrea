@@ -38,14 +38,6 @@ const BasicTree = memo(function BasicTree() {
   // Expanded state is a Record<string, boolean> map
   const [expandedState, setExpandedState] = useState({});
 
-  const expandAllExample = useCallback(() => {
-    const newState = {};
-    const traverse = (node) => {
-      newState[node.id] = true;
-      node.children?.forEach(traverse);
-    };
-  }, []);
-
   const [treeData] = useState({
     id: 'root',
     name: 'Root',

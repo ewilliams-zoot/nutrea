@@ -41,8 +41,22 @@ interface UseTreeParams<TData> {
    */
   showRoot?: boolean;
 
+  /**
+   * The string data to search for.
+   */
   searchTerm?: string;
+  /**
+   * The function that will be called for each node in the tree, which is passed the node
+   * and the original search term string.
+   * @returns
+   */
   searchMatch?: (node: TData, searchTerm: string) => boolean;
+
+  /**
+   * A compare function to sort chlidren within a parent node. This function is passed directly
+   * to the `Array.sort` method.
+   */
+  childSort?: (nodeA: TData, nodeB: TData) => number;
 }
 
 export type TreeDataNode<TData> = TData & {
@@ -68,7 +82,8 @@ export const useTree = <TData>({
   onSelection,
   showRoot = true,
   searchTerm,
-  searchMatch
+  searchMatch,
+  childSort
 }: UseTreeParams<TData>) => {
   const [prevData, setPrevData] = useState(data);
   const childrenMemoRef = useRef<Record<string, undefined | TData[]>>({});
@@ -115,16 +130,21 @@ export const useTree = <TData>({
     (node: TData) => {
       const nodeId = accessId(node);
       // If memoized since the last render, return the previously obtained children.
-      if (childrenMemoRef.current[nodeId]) {
+      if (getChildren && childrenMemoRef.current[nodeId]) {
         return childrenMemoRef.current[nodeId];
       }
 
       // If not memoized, obtain children through traversal and set memoization.
       const children = accessChildren(node);
-      childrenMemoRef.current[nodeId] = children;
+      if (childSort) {
+        children?.sort(childSort);
+      }
+      if (getChildren) {
+        childrenMemoRef.current[nodeId] = children;
+      }
       return children;
     },
-    [accessId, accessChildren]
+    [accessId, accessChildren, childSort, getChildren]
   );
 
   const toggleExpanded = useCallback(
@@ -184,15 +204,6 @@ export const useTree = <TData>({
 
     return result;
   }, [data, accessId, getMemoChildren, expandedState, toggleExpanded, onSelection, showRoot, searchTerm, searchMatch]);
-
-  /**
-   * To prevent clearing and recreating the whole memoized map of relationships.
-   */
-  // const changeRelationships = useCallback((changedIds: string[]) => {
-  //   changedIds.forEach((id) => {
-  //     childrenMemoRef.current[id] = null;
-  //   });
-  // }, []);
 
   /**
    * Will give your tree nodes accessible keyboard navigation when you pass it to your tree node's

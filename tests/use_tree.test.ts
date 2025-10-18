@@ -124,6 +124,25 @@ test('using filter reduces the list', () => {
   expect(result.current.visibleList.length).toBe(2);
 });
 
+test('passing childSort reorganizes children', () => {
+  const expandedState: Record<string, boolean> = {
+    root: true
+  };
+
+  const { result } = renderHook((initialProps) => useTree<typeof treeData>({ ...initialProps }), {
+    initialProps: {
+      data: treeData,
+      expandedState,
+      showRoot: false,
+      onExpandedStateChange: () => {},
+      onSelection: () => {},
+      childSort: (nodeA, nodeB) => nodeB.name.localeCompare(nodeA.name)
+    }
+  });
+
+  expect(result.current.visibleList[0].name).toBe('Folder Two');
+});
+
 const customTreeData = {
   root: {
     qx: 'root',

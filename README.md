@@ -1,5 +1,7 @@
 # Nutrea
 
+[![build_and_test](https://github.com/ewilliams-zoot/nutrea/actions/workflows/build_and_test.yml/badge.svg?branch=main)](https://github.com/ewilliams-zoot/nutrea/actions/workflows/build_and_test.yml)
+
 A kind of headless tree hook library focused on efficiency and flexibility.
 
 ## Why?

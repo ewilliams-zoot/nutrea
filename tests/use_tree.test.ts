@@ -2,7 +2,13 @@ import { useTree } from '../src/index';
 import { expect, test } from 'vitest';
 import { renderHook } from '@testing-library/react';
 
-const treeData = {
+type TreeNode = {
+  id: string;
+  name: string;
+  children?: TreeNode[];
+};
+
+const treeData: TreeNode = {
   id: 'root',
   name: 'Root',
   children: [
@@ -28,7 +34,7 @@ test('collapsed nodes are not included', () => {
     root: true
   };
 
-  const { result } = renderHook((initialProps) => useTree<typeof treeData>({ ...initialProps }), {
+  const { result } = renderHook((initialProps) => useTree<TreeNode>({ ...initialProps }), {
     initialProps: {
       data: treeData,
       expandedState,
@@ -46,7 +52,7 @@ test('all expanded to be included', () => {
     folder2: true
   };
 
-  const { result } = renderHook((initialProps) => useTree<typeof treeData>({ ...initialProps }), {
+  const { result } = renderHook((initialProps) => useTree<TreeNode>({ ...initialProps }), {
     initialProps: {
       data: treeData,
       expandedState,
@@ -64,7 +70,7 @@ test('show root excludes root node when all are expanded', () => {
     folder2: true
   };
 
-  const { result } = renderHook((initialProps) => useTree<typeof treeData>({ ...initialProps }), {
+  const { result } = renderHook((initialProps) => useTree<TreeNode>({ ...initialProps }), {
     initialProps: {
       data: treeData,
       expandedState,
@@ -83,7 +89,7 @@ test('passing new expanded state updates list', () => {
     root: true
   };
 
-  const { result, rerender } = renderHook((initialProps) => useTree<typeof treeData>({ ...initialProps }), {
+  const { result, rerender } = renderHook((initialProps) => useTree<TreeNode>({ ...initialProps }), {
     initialProps: {
       data: treeData,
       expandedState,
@@ -110,16 +116,26 @@ test('using filter reduces the list', () => {
     folder2: true
   };
 
-  const { result } = renderHook((initialProps) => useTree<typeof treeData>({ ...initialProps }), {
-    initialProps: {
-      data: treeData,
-      expandedState,
-      onExpandedStateChange: () => {},
-      onSelection: () => {},
-      searchTerm: 'Two',
-      searchMatch: (node, term) => node.name.includes(term)
+  const { result } = renderHook(
+    (initialProps: {
+      data: TreeNode;
+      expandedState: Record<string, boolean>;
+      onExpandedStateChange: (newState: Record<string, boolean>) => void;
+      onSelection: (node: TreeNode) => void;
+      searchTerm: string;
+      searchMatch: (node: TreeNode, term: string) => boolean;
+    }) => useTree<TreeNode>({ ...initialProps }),
+    {
+      initialProps: {
+        data: treeData,
+        expandedState,
+        onExpandedStateChange: () => {},
+        onSelection: () => {},
+        searchTerm: 'Two',
+        searchMatch: (node, term) => node.name.includes(term)
+      }
     }
-  });
+  );
 
   expect(result.current.visibleList.length).toBe(2);
 });
@@ -129,21 +145,32 @@ test('passing childSort reorganizes children', () => {
     root: true
   };
 
-  const { result } = renderHook((initialProps) => useTree<typeof treeData>({ ...initialProps }), {
-    initialProps: {
-      data: treeData,
-      expandedState,
-      showRoot: false,
-      onExpandedStateChange: () => {},
-      onSelection: () => {},
-      childSort: (nodeA, nodeB) => nodeB.name.localeCompare(nodeA.name)
+  const { result } = renderHook(
+    (initialProps: {
+      data: TreeNode;
+      expandedState: Record<string, boolean>;
+      onExpandedStateChange: (newState: Record<string, boolean>) => void;
+      onSelection: (node: TreeNode) => void;
+      showRoot: boolean;
+      childSort: (nodeA: TreeNode, nodeB: TreeNode) => number;
+    }) => useTree<typeof treeData>({ ...initialProps }),
+    {
+      initialProps: {
+        data: treeData,
+        expandedState,
+        showRoot: false,
+        onExpandedStateChange: () => {},
+        onSelection: () => {},
+        childSort: (nodeA, nodeB) => nodeB.name.localeCompare(nodeA.name)
+      }
     }
-  });
+  );
 
   expect(result.current.visibleList[0].name).toBe('Folder Two');
 });
 
-const customTreeData = {
+type CustomTreeNode = { qx: string; label: string; childrenQx?: string[] };
+const customTreeData: Record<string, CustomTreeNode> = {
   root: {
     qx: 'root',
     label: 'Root',
@@ -159,8 +186,8 @@ const customTreeData = {
     childrenQx: ['nestedItem']
   },
   nestedItem: {
-    id: 'nestedItem',
-    name: 'Nested Item'
+    qx: 'nestedItem',
+    label: 'Nested Item'
   }
 } as const;
 
@@ -170,16 +197,26 @@ test('using custom data with accessor props builds a full list', () => {
     folder2: true
   };
 
-  const { result } = renderHook((initialProps) => useTree<typeof customTreeData>({ ...initialProps }), {
-    initialProps: {
-      data: customTreeData.root,
-      expandedState,
-      getId: (node) => node.qx,
-      getChildren: (node) => node.childrenQx?.map((id) => customTreeData[id]),
-      onExpandedStateChange: () => {},
-      onSelection: () => {}
+  const { result } = renderHook(
+    (initialProps: {
+      data: CustomTreeNode;
+      expandedState: Record<string, boolean>;
+      getId: (node: CustomTreeNode) => string;
+      getChildren: (node: CustomTreeNode) => CustomTreeNode[] | undefined;
+      onExpandedStateChange: (newState: Record<string, boolean>) => void;
+      onSelection: (node: CustomTreeNode) => void;
+    }) => useTree<CustomTreeNode>({ ...initialProps }),
+    {
+      initialProps: {
+        data: customTreeData.root,
+        expandedState,
+        getId: (node) => node.qx,
+        getChildren: (node) => node.childrenQx?.map((id) => customTreeData[id]),
+        onExpandedStateChange: () => {},
+        onSelection: () => {}
+      }
     }
-  });
+  );
 
   expect(result.current.visibleList.length).toBe(4);
 });

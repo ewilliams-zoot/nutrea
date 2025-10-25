@@ -4,6 +4,9 @@
   "version": "0.0.1",
   "type": "module",
   "license": "MIT",
+  "workspaces": [
+    "examples"
+  ],
   "author": {
     "name": "Ezekiel Williams",
     "email": "broncoscorpio@gmail.com"
@@ -23,10 +26,8 @@
     "src"
   ],
   "scripts": {
-    "dev": "vite",
     "build": "tsc -b",
     "lint": "eslint .",
-    "preview": "vite preview",
     "test": "vitest",
     "testRun": "vitest run"
   },

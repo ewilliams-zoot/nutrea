@@ -135,6 +135,7 @@ Since this library doesn't render the UI, it's up to you to handle things like d
 ```jsx
 const TreeNode = memo(function TreeNode({
   id,
+  indexInList,
   isExpanded,
   hasChildren,
   select,
@@ -158,7 +159,7 @@ const TreeNode = memo(function TreeNode({
     <div
       ref={nodeRef}
       tabIndex={-1}
-      onKeyDown={navigateWithKey}
+      onKeyDown={(e) => navigateWithKey(e, indexInList)}
       onClick={select}
       role="tree-item"
       aria-expanded={isExpanded}

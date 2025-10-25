@@ -84,11 +84,21 @@ export const useTree = <TData>({
   searchTerm,
   searchMatch,
   childSort
-}: UseTreeParams<TData>) => {
-  const [prevData, setPrevData] = useState(data);
+}: UseTreeParams<TData>): {
+  visibleList: TreeDataNode<TData>[];
+  /**
+   * Will give your tree nodes accessible keyboard navigation when you pass it to your tree node's
+   * `onKeyDown` or `onKeyUp` props.
+   * The tree node element must be focusable, because keyboard events won't emit from non-focusable
+   * elements. Setting a `tabIndex` of `-1` is recommended to prevent sequential tab navigation but allow
+   * focus.
+   * @returns The next index in the visible list that will be selected by the end of this function.
+   */
+  navigateWithKey: (e: React.KeyboardEvent, currentIndex: number) => void;
+} => {
   const childrenMemoRef = useRef<Record<string, undefined | TData[]>>({});
+  const [prevData, setPrevData] = useState(data);
 
-  // When data changes, we need to reset the memoized children, so new or removed children will be included.
   if (prevData !== data) {
     childrenMemoRef.current = {};
     setPrevData(data);
@@ -205,14 +215,6 @@ export const useTree = <TData>({
     return result;
   }, [data, accessId, getMemoChildren, expandedState, toggleExpanded, onSelection, showRoot, searchTerm, searchMatch]);
 
-  /**
-   * Will give your tree nodes accessible keyboard navigation when you pass it to your tree node's
-   * `onKeyDown` or `onKeyUp` props.
-   * The tree node element must be focusable, because keyboard events won't emit from non-focusable
-   * elements. Setting a `tabIndex` of `-1` is recommended to prevent sequential tab navigation but allow
-   * focus.
-   * @returns The next index in the visible list that will be selected by the end of this function.
-   */
   const navigateWithKey = useCallback(
     (e: React.KeyboardEvent, currentIndex: number) => {
       e.preventDefault();

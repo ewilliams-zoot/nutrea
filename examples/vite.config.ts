@@ -11,5 +11,8 @@ export default defineConfig({
     }),
     react()
   ],
-  base: '/nutrea/'
+  base: '/nutrea/',
+  build: {
+    outDir: '../docs'
+  }
 });

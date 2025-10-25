@@ -8,7 +8,8 @@ const router = createRouter({
   routeTree,
   defaultPreload: 'intent',
   defaultStaleTime: 5000,
-  scrollRestoration: true
+  scrollRestoration: true,
+  basepath: '/nutrea'
 });
 
 // Register things for typesafety
